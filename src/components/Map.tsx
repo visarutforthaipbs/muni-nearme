@@ -311,10 +311,10 @@ const Map: React.FC<MapProps> = ({ onMunicipalitySelect }) => {
 
             // Check if we have a valid budget value
             if (rawBudgetValue) {
-              // Remove commas before parsing
+              // Remove commas and spaces before parsing
               const cleanBudgetValue = rawBudgetValue
                 .toString()
-                .replace(/,/g, "");
+                .replace(/[\s,]/g, "");
               const budgetValue = parseFloat(cleanBudgetValue);
               console.log(
                 `Cleaned budget value: ${cleanBudgetValue}, parsed: ${budgetValue}`
@@ -408,7 +408,7 @@ const Map: React.FC<MapProps> = ({ onMunicipalitySelect }) => {
               population: parseInt(
                 feature.properties[
                   "1- clean-extracted_46_to_235_poppu"
-                ]?.replace(/,/g, "") || "0"
+                ]?.replace(/[\s,]/g, "") || "0"
               ),
               area: parseFloat(
                 feature.properties[
@@ -509,7 +509,7 @@ const Map: React.FC<MapProps> = ({ onMunicipalitySelect }) => {
               "เทศบาลตำบล",
             population: parseInt(
               feature.properties["1- clean-extracted_46_to_235_poppu"]?.replace(
-                /,/g,
+                /[\s,]/g,
                 ""
               ) || "0"
             ),
@@ -551,8 +551,8 @@ const Map: React.FC<MapProps> = ({ onMunicipalitySelect }) => {
 
     // Check if we have a valid budget value
     if (rawBudgetValue) {
-      // Remove commas before parsing
-      const cleanBudgetValue = rawBudgetValue.toString().replace(/,/g, "");
+      // Remove commas and spaces before parsing
+      const cleanBudgetValue = rawBudgetValue.toString().replace(/[\s,]/g, "");
       const budgetValue = parseFloat(cleanBudgetValue);
 
       if (!isNaN(budgetValue)) {
@@ -611,13 +611,13 @@ const Map: React.FC<MapProps> = ({ onMunicipalitySelect }) => {
 
     // Get actual budget sources data if available
     let selfCollected = parseFloat(
-      properties["จัดเก็บเอง (ล้านบาท)"]?.replace(/,/g, "") || "0"
+      properties["จัดเก็บเอง (ล้านบาท)"]?.replace(/[\s,]/g, "") || "0"
     );
     let stateAllocated = parseFloat(
-      properties["รัฐจัดสรร (ล้านบาท)"]?.replace(/,/g, "") || "0"
+      properties["รัฐจัดสรร (ล้านบาท)"]?.replace(/[\s,]/g, "") || "0"
     );
     let subsidies = parseFloat(
-      properties["เงินอุดหนุน (ล้านบาท)"]?.replace(/,/g, "") || "0"
+      properties["เงินอุดหนุน (ล้านบาท)"]?.replace(/[\s,]/g, "") || "0"
     );
 
     // If we don't have real data, estimate based on municipality type
