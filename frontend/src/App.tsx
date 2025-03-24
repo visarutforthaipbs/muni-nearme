@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 import "leaflet/dist/leaflet.css";
 import Map from "./components/Map";
@@ -10,10 +10,24 @@ const App: React.FC = () => {
     useState<Municipality | null>(null);
   const [activePage, setActivePage] = useState<"map" | "election">("map");
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
+  const [currentLogoIndex, setCurrentLogoIndex] = useState<number>(0);
 
+  // Array of logo images to rotate
+  const logoImages = ["/1.png", "/2.png", "/3.png"];
+
+  // Function to handle municipality selection
   const handleMunicipalitySelect = (municipality: Municipality | null) => {
     setSelectedMunicipality(municipality);
   };
+
+  // Logo rotation effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentLogoIndex((prevIndex) => (prevIndex + 1) % logoImages.length);
+    }, 3000); // Change image every 3 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   const toggleMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -42,7 +56,7 @@ const App: React.FC = () => {
         <div className="header-content">
           <div className="logo-container">
             <img
-              src="/logo-1.gif"
+              src={logoImages[currentLogoIndex]}
               alt="เทศบาลใกล้ฉัน Logo"
               className="app-logo"
             />

@@ -11,6 +11,10 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ municipality }) => {
   const [showBudgetBreakdown, setShowBudgetBreakdown] = useState(false);
   const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 768);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
+  const [currentLogoIndex, setCurrentLogoIndex] = useState<number>(0);
+
+  // Array of logo images to rotate
+  const logoImages = ["/1.png", "/2.png", "/3.png"];
 
   useEffect(() => {
     const handleResize = () => {
@@ -21,6 +25,15 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ municipality }) => {
     return () => {
       window.removeEventListener("resize", handleResize);
     };
+  }, []);
+
+  // Logo rotation effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentLogoIndex((prevIndex) => (prevIndex + 1) % logoImages.length);
+    }, 3000); // Change image every 3 seconds
+
+    return () => clearInterval(interval);
   }, []);
 
   // Display different badge classes based on municipality type
@@ -67,7 +80,7 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ municipality }) => {
       return (
         <div className="placeholder-content">
           <img
-            src="/logo-1.gif"
+            src={logoImages[currentLogoIndex]}
             alt="เทศบาลใกล้ฉัน"
             className="logo-image"
             style={{
