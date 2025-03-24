@@ -260,7 +260,6 @@ const BudgetAllocationTool: React.FC<BudgetAllocationToolProps> = ({
     return (
       <div className="budget-allocator">
         <div className="budget-header">
-          <h3>จัดสรรงบประมาณในฐานะนายกเทศมนตรี</h3>
           <div className="budget-total">
             <div className="municipality-budget">
               งบประมาณทั้งหมด: {formatBudget(municipalBudget)}
