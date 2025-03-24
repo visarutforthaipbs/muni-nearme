@@ -66,7 +66,16 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ municipality }) => {
     if (!municipality) {
       return (
         <div className="placeholder-content">
-          <h2>เทศบาลใกล้ฉัน</h2>
+          <img
+            src="/logo-1.gif"
+            alt="เทศบาลใกล้ฉัน"
+            className="logo-image"
+            style={{
+              maxWidth: "200px",
+              margin: "0 auto 15px",
+              display: "block",
+            }}
+          />
           <p>เลือกเทศบาลบนแผนที่เพื่อดูข้อมูล</p>
           <div className="placeholder-icon">
             <svg
@@ -221,7 +230,9 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ municipality }) => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="budget-modal-header">
-              <h3>จัดสรรงบประมาณเทศบาล{municipality?.name}</h3>
+              <h3>
+                ถ้าเป็นคุณจะจัดสรรงบประมาณเทศบาล{municipality?.name} อย่างไร?
+              </h3>
               <button
                 className="modal-close-button"
                 onClick={() => setShowBudgetModal(false)}

@@ -75,6 +75,13 @@ body {
   height: 44px;
 }
 
+.logo-image {
+  max-width: 200px;
+  margin: 0 auto 15px;
+  display: block;
+  border-radius: 4px;
+}
+
 .nav-controls {
   display: flex;
   align-items: center;
@@ -556,7 +563,7 @@ body {
 .first-voter-badge {
   display: inline-block;
   background-color: var(--accent);
-  color: white;
+  color: var(--primary-dark);
   font-weight: 600;
   padding: 8px 16px;
   border-radius: 30px;
@@ -751,7 +758,7 @@ body {
 .election-day {
   display: inline-block;
   background-color: var(--accent);
-  color: white;
+  color: var(--primary-dark);
   font-weight: 600;
   padding: 4px 12px;
   border-radius: 20px;
