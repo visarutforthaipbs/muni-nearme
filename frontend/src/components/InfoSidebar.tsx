@@ -80,7 +80,7 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ municipality }) => {
       return (
         <div className="placeholder-content">
           <img
-            src={logoImages[currentLogoIndex]}
+            src="/logo-1.gif"
             alt="เทศบาลใกล้ฉัน"
             className="logo-image"
             style={{
@@ -243,9 +243,7 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ municipality }) => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="budget-modal-header">
-              <h3>
-                ถ้าเป็นคุณจะจัดสรรงบประมาณเทศบาล{municipality?.name} อย่างไร?
-              </h3>
+              <h3>ถ้าเป็นคุณจะจัดสรรงบประมาณ{municipality?.name}อย่างไร?</h3>
               <button
                 className="modal-close-button"
                 onClick={() => setShowBudgetModal(false)}
