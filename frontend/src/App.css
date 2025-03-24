@@ -416,6 +416,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  font-family: "Prompt", sans-serif;
 }
 
 .map-controls button:hover {
