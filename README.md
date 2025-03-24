@@ -8,13 +8,34 @@
 - ระบุตำแหน่งผู้ใช้และค้นหาเทศบาลใกล้เคียง
 - แสดงข้อมูลงบประมาณและรายละเอียดของเทศบาล
 - รองรับการแสดงผลบนอุปกรณ์มือถือ
+- รองรับการจัดสรรงบประมาณในฐานะนายกเทศมนตรี
+- บันทึกการจัดสรรงบประมาณและไอเดียการเพิ่มรายได้ลงฐานข้อมูล MongoDB
 
-## การติดตั้ง
+## โครงสร้างโปรเจค
+
+```
+municipality-near-me/
+├── backend/               # เซิร์ฟเวอร์ Express.js
+│   ├── package.json       # ไฟล์กำหนดการติดตั้งสำหรับเซิร์ฟเวอร์
+│   ├── server.js          # โค้ดหลักของเซิร์ฟเวอร์
+│   └── .env               # ตัวแปรสภาพแวดล้อมสำหรับเซิร์ฟเวอร์
+├── frontend/              # แอปพลิเคชัน React
+│   ├── public/            # ไฟล์สาธารณะของ React
+│   ├── src/               # โค้ดหลักของแอปพลิเคชัน React
+│   ├── package.json       # ไฟล์กำหนดการติดตั้งสำหรับไคลเอนต์
+│   ├── tsconfig.json      # การตั้งค่า TypeScript
+│   └── .env               # ตัวแปรสภาพแวดล้อมสำหรับไคลเอนต์
+├── package.json           # ไฟล์กำหนดการติดตั้งหลักสำหรับ monorepo
+└── README.md              # เอกสารโปรเจค
+```
+
+## การติดตั้งสำหรับการพัฒนา
 
 1. ติดตั้ง dependencies:
 
 ```bash
-npm install
+# ติดตั้ง dependencies ทั้งหมด (frontend และ backend)
+npm run install:all
 ```
 
 2. **สำคัญ: ประมวลผลไฟล์ GeoJSON** (จำเป็นต้องทำก่อนการใช้งาน):
@@ -23,46 +44,88 @@ npm install
 npm run convert-data
 ```
 
-**หมายเหตุ:** การประมวลผลไฟล์ GeoJSON อาจใช้เวลานานและหน่วยความจำมาก เนื่องจากไฟล์มีขนาดใหญ่ (~128MB) หากพบปัญหา "JavaScript heap out of memory" ให้ใช้คำสั่งนี้แทน:
+**หมายเหตุ:** การประมวลผลไฟล์ GeoJSON อาจใช้เวลานานและหน่วยความจำมาก เนื่องจากไฟล์มีขนาดใหญ่ (\~128MB) หากพบปัญหา "JavaScript heap out of memory" ให้ใช้คำสั่งนี้แทน:
 
 ```bash
-node --max-old-space-size=4096 src/utils/convertGeoJson.js
+cd frontend && node --max-old-space-size=4096 src/utils/convertGeoJson.js
 ```
 
-3. รันแอปพลิเคชันในโหมด development:
+3. ตั้งค่าไฟล์ `.env` ในไดเรกทอรี `frontend` และ `backend`:
+
+   **backend/.env**
+
+   ```
+   PORT=3001
+   MONGODB_URI=mongodb://localhost:27017/municipality-budget
+   NODE_ENV=development
+   ```
+
+   **frontend/.env**
+
+   ```
+   REACT_APP_API_URL=http://localhost:3001/api
+   ```
+
+4. รันแอปพลิเคชันในโหมด development:
 
 ```bash
-npm start
+npm run dev
 ```
 
-เว็บแอปพลิเคชันจะเปิดที่ [http://localhost:3000](http://localhost:3000) ในเบราว์เซอร์ของคุณ
+เว็บแอปพลิเคชันจะเปิดที่ <http://localhost:3000> ในเบราว์เซอร์ของคุณ
+
+## การติดตั้ง MongoDB
+
+1. **ติดตั้งและรัน MongoDB ในเครื่องคุณ** (สำหรับการพัฒนา)
+
+```bash
+# สำหรับ macOS ด้วย Homebrew
+brew tap mongodb/brew
+brew install mongodb-community
+brew services start mongodb-community
+
+# สำหรับ Windows/Linux โปรดดูคำแนะนำที่ https://docs.mongodb.com/manual/installation/
+```
+
+2. **หรือใช้ MongoDB Atlas** (สำหรับการพัฒนาและโปรดักชัน)
+   - สร้างบัญชีที่ [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register)
+   - สร้าง cluster ใหม่ (ใช้ tier ฟรี)
+   - สร้าง Database User และตั้งค่า Network Access
+   - ได้รับ connection string และอัปเดตใน `.env` ไฟล์
+
+## การ Deploy บน Render.com
+
+1. **สร้างบัญชี Render** ที่ [render.com](https://render.com)
+
+2. **สร้าง Web Service ใหม่**:
+
+   - เชื่อมต่อกับ GitHub repository ของคุณ
+   - กำหนดชื่อบริการ (เช่น "municipality-budget")
+   - ตั้งค่า Root Directory: `backend`
+   - ตั้งค่า Build Command: `npm run render-postbuild`
+   - ตั้งค่า Start Command: `npm start`
+   - เลือก Free tier
+   - คลิก "Create Web Service"
+
+3. **เพิ่มตัวแปรสภาพแวดล้อม**:
+   - `MONGODB_URI`: connection string ของคุณจาก MongoDB Atlas
+   - `NODE_ENV`: "production"
+   - `PORT`: "10000" (Render ใช้พอร์ตนี้ภายใน)
 
 ## การแก้ไขปัญหา
 
 - **ไม่พบข้อมูลแผนที่:** ตรวจสอบว่าได้รันคำสั่ง `npm run convert-data` เรียบร้อยแล้ว
 - **ไฟล์ GeoJSON มีขนาดใหญ่เกินไป:** แก้ไขค่า `simplifyGeometry` ในไฟล์ `src/utils/convertGeoJson.js` เพื่อลดขนาดไฟล์
-- **ไม่พบเทศบาลในตำแหน่งของคุณ:** ตรวจสอบว่าตำแหน่งของคุณอยู่ในเขตเทศบาลที่มีข้อมูลในระบบ
-
-## การปรับแต่งข้อมูล
-
-คุณสามารถปรับแต่งข้อมูลได้โดย:
-
-1. แก้ไขไฟล์ `src/utils/convertGeoJson.js` เพื่อกำหนดการแปลงข้อมูล GeoJSON
-2. เพิ่มข้อมูลงบประมาณที่ถูกต้องในไฟล์ `convertGeoJson.js` หรือสร้างไฟล์ JSON แยกต่างหาก
-
-## การ Build สำหรับ Production
-
-```bash
-npm run build
-```
-
-คำสั่งนี้จะสร้างแอปพลิเคชันเวอร์ชัน production ในโฟลเดอร์ `build`
+- **ไม่สามารถเชื่อมต่อกับ MongoDB:** ตรวจสอบว่า MongoDB กำลังทำงานและ connection string ถูกต้อง
+- **การส่งข้อมูลล้มเหลว:** ตรวจสอบว่าเซิร์ฟเวอร์ backend กำลังทำงานและสามารถเข้าถึงได้
 
 ## เทคโนโลยีที่ใช้
 
-- React + TypeScript
-- Leaflet (แผนที่แบบโอเพนซอร์ส)
-- GeoJSON สำหรับข้อมูลแผนที่เทศบาล
+- **Frontend**: React + TypeScript
+- **Maps**: Leaflet (แผนที่แบบโอเพนซอร์ส)
+- **Backend**: Express.js
+- **Database**: MongoDB
+- **Hosting**: Render.com
 
 ## ข้อมูลเพิ่มเติม
 

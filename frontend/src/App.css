@@ -1617,11 +1617,11 @@ body {
 
 /* Budget Allocation Tool */
 .budget-allocation-tool {
-  padding: 20px;
-  background-color: var(--light);
+  background-color: white;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 30px;
 }
 
 .tool-header {
@@ -1663,26 +1663,42 @@ body {
 
 .budget-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--gray-light);
 }
 
 .budget-header h3 {
-  font-size: 1.3rem;
+  font-size: 1.4rem;
+  margin-bottom: 10px;
+  color: var(--dark);
+}
+
+.budget-total {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.municipality-budget {
+  font-size: 1.1rem;
+  font-weight: 500;
   color: var(--dark);
 }
 
 .budget-remaining {
-  font-weight: 600;
-  padding: 5px 12px;
+  padding: 8px 12px;
+  background-color: #e6f7ff;
   border-radius: 4px;
-  background-color: #e3f2fd;
+  font-weight: 500;
+  color: #0081c6;
+  display: inline-block;
 }
 
 .over-budget {
-  background-color: #ffebee;
-  color: #e53935;
+  background-color: #ffecec;
+  color: #ff5062;
 }
 
 .budget-sliders {
@@ -1772,9 +1788,9 @@ body {
 }
 
 .budget-actions {
+  margin-top: 24px;
   display: flex;
   justify-content: center;
-  margin-top: 20px;
 }
 
 .budget-button {
@@ -1845,6 +1861,7 @@ body {
 @media (max-width: 768px) {
   .budget-allocation-tool {
     padding: 15px;
+    margin-bottom: 20px;
   }
 
   .tool-header h2 {
@@ -1879,6 +1896,25 @@ body {
 
   .budget-modal-header h3 {
     font-size: 1.2rem;
+  }
+
+  .budget-total {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .municipality-budget {
+    font-size: 1rem;
+    margin-bottom: 5px;
+  }
+
+  .over-budget-ideas,
+  .over-budget-ideas-display {
+    padding: 12px;
+  }
+
+  .over-budget-textarea {
+    padding: 10px;
   }
 }
 
@@ -2092,4 +2128,147 @@ body {
   margin-top: 20px;
   color: var(--primary-light);
   opacity: 0.7;
+}
+
+/* New styles for over-budget ideas */
+.over-budget-ideas {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #fff8f8;
+  border: 1px solid #ffcdd2;
+}
+
+.over-budget-ideas h4 {
+  color: var(--secondary);
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+.over-budget-ideas p {
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+.over-budget-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-family: "Prompt", sans-serif;
+  resize: vertical;
+  font-size: 0.95rem;
+}
+
+.over-budget-ideas-display {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #f1f8e9;
+  border: 1px solid #dcedc8;
+}
+
+.over-budget-ideas-display h4 {
+  color: #689f38;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+.over-budget-ideas-display p {
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Budget summary styles */
+.budget-summary {
+  margin-top: 20px;
+}
+
+.budget-summary h4 {
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  color: var(--primary);
+}
+
+.budget-summary-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.summary-item {
+  background-color: var(--light);
+  border-radius: 8px;
+  padding: 12px 15px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.summary-item-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.summary-item .category-color {
+  width: 16px;
+  height: 16px;
+}
+
+.summary-item .category-name {
+  flex: 1;
+}
+
+.summary-item .category-percentage {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.summary-item .category-amount {
+  padding-left: 26px;
+  font-size: 0.95rem;
+  color: var(--gray);
+}
+
+@media (max-width: 768px) {
+  .budget-summary h4 {
+    font-size: 1.1rem;
+  }
+
+  .summary-item {
+    padding: 10px;
+  }
+
+  .summary-item .category-amount {
+    padding-left: 20px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Budget save result status message */
+.save-result {
+  margin-top: 15px;
+  padding: 12px 15px;
+  border-radius: 6px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.save-result.success {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+}
+
+.save-result.error {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+}
+
+/* Disabled button style */
+.budget-button:disabled {
+  background-color: var(--gray);
+  cursor: not-allowed;
 }
