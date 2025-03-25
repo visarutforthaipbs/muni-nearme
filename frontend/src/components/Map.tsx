@@ -117,7 +117,7 @@ const Map: React.FC<MapProps> = ({ onMunicipalitySelect }) => {
         const response = await axios.get(
           `${
             process.env.PUBLIC_URL
-          }/data/topo-test-31 (2).json?t=${new Date().getTime()}`
+          }/data/topo-data.json?t=${new Date().getTime()}`
         );
 
         console.log("TopoJSON data loaded successfully");
