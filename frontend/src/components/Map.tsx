@@ -115,7 +115,9 @@ const Map: React.FC<MapProps> = ({ onMunicipalitySelect }) => {
 
         // Use the corrected file - add a timestamp query parameter to force reload
         const response = await axios.get(
-          `/data/topo-test-31 (2).json?t=${new Date().getTime()}`
+          `${
+            process.env.PUBLIC_URL
+          }/data/topo-test-31 (2).json?t=${new Date().getTime()}`
         );
 
         console.log("TopoJSON data loaded successfully");
@@ -250,6 +252,14 @@ const Map: React.FC<MapProps> = ({ onMunicipalitySelect }) => {
         }
       } catch (err) {
         console.error("Error loading TopoJSON data:", err);
+        console.error("Error details:", {
+          message: err instanceof Error ? err.message : "Unknown error",
+          stack: err instanceof Error ? err.stack : undefined,
+          response:
+            err && (err as any).response
+              ? (err as any).response.data
+              : undefined,
+        });
         setError("ไม่สามารถโหลดข้อมูลแผนที่ได้ กรุณาลองใหม่อีกครั้ง");
         setDataLoading(false);
       }
