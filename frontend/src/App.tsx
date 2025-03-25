@@ -525,7 +525,7 @@ const App: React.FC = () => {
               </a>
 
               <a
-                href="https://psub.psu.ac.th/?p=14569"
+                href="https://www.thaipbs.or.th/news/content/349184"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="source-link"

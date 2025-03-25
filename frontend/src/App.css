@@ -1899,11 +1899,12 @@ body {
   /* Add budget modal styles for mobile */
   .budget-modal-content {
     max-width: 100%;
-    max-height: 95vh;
+    max-height: 70vh;
   }
 
   .budget-modal-header h3 {
     font-size: 1.2rem;
+    line-height: 1;
   }
 
   .budget-total {
@@ -2049,7 +2050,7 @@ body {
   border-radius: 8px;
   max-width: 900px;
   width: 100%;
-  max-height: 90vh;
+  max-height: 75vh;
   overflow-y: auto;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   display: flex;
