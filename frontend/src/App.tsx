@@ -499,28 +499,41 @@ const App: React.FC = () => {
             <h3>แหล่งข้อมูลเพิ่มเติม</h3>
             <div className="sources-list">
               <a
-                href="https://www.ect.go.th/"
+                href="https://www.ect.go.th/web-upload/1xff0d34e409a13ef56eea54c52a291126/m_document/2162/26772/file_download/456fe07ed5c39466f0801e2ca28dc71b.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="source-link"
               >
-                <div className="source-icon ect"></div>
+                <img
+                  src="https://image.makewebcdn.com/makeweb/m_1920x0/aefC7RLgX/DefaultData/%E0%B8%81%E0%B8%81%E0%B8%95__1.png?v=202405291424"
+                  alt="ECT"
+                  className="source-icon ect"
+                />
                 <div className="source-info">
                   <h4>สำนักงานคณะกรรมการการเลือกตั้ง (กกต.)</h4>
-                  <p>ข้อมูลทางการเกี่ยวกับการเลือกตั้งทุกระดับในประเทศไทย</p>
+                  <p>คู่มือประชาชนเพื่อการเลือกตั้งเทศบาล ปี 2568</p>
                 </div>
               </a>
 
               <a
-                href="https://www.thansettakij.com/politics/620748"
+                href="https://www.thaipbs.or.th/news/content/351417"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="source-link"
               >
-                <div className="source-icon news"></div>
+                <img
+                  src="https://news.thaipbs.or.th/media/2aYqS0l4EOhseuUiTNZUDQyGYWBwskWa.jpg?auto=format&fit=max&w=2048"
+                  alt="Thai PBS"
+                  className="source-icon news"
+                />
                 <div className="source-info">
-                  <h4>เลือกตั้งเทศบาล 2568 วันไหน เช็กความรู้การเลือกตั้ง</h4>
-                  <p>บทความให้ความรู้เกี่ยวกับการเลือกตั้งเทศบาลปี 2568</p>
+                  <h4>
+                    เปิดขั้นตอน ข้อห้าม เลือกตั้งสมาชิกสภาเทศบาล-นายกเทศมนตรี
+                  </h4>
+                  <p>
+                    กกต.เปิดขั้นตอนการลงคะแนนเลือกตั้งสมาชิกสภาเทศบาลและนายกเทศมนตรี
+                    และ 10 ข้อห้ามฝ่าฝืนเจอโทษจำคุก-ปรับ
+                  </p>
                 </div>
               </a>
 
@@ -530,7 +543,11 @@ const App: React.FC = () => {
                 rel="noopener noreferrer"
                 className="source-link"
               >
-                <div className="source-icon edu"></div>
+                <img
+                  src="https://news.thaipbs.or.th/media/2aYqS0l4EOhseuUiTgXb4MotGYo2I0NN.jpg?auto=format&fit=max&w=2048"
+                  alt="Education"
+                  className="source-icon edu"
+                />
                 <div className="source-info">
                   <h4>กำหนดวันเลือกตั้งเทศบาล ทั่วประเทศ 11 พ.ค. 2568</h4>
                   <p>ประกาศอย่างเป็นทางการเกี่ยวกับกำหนดการเลือกตั้งเทศบาล</p>
