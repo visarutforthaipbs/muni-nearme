@@ -278,8 +278,9 @@ const App: React.FC = () => {
                   <h4>รับบัตรเลือกตั้ง</h4>
                   <p>
                     คุณจะได้รับบัตร 2 ใบ:{" "}
-                    <span className="highlight">สีชมพู</span> สำหรับเลือกนายกฯ
-                    และ <span className="highlight">สีเขียว</span>{" "}
+                    <span className="highlight">เหลืองทอง</span>{" "}
+                    สำหรับเลือกนายกฯ และ{" "}
+                    <span className="highlight">สีเขียว</span>{" "}
                     สำหรับเลือกสมาชิกสภา
                   </p>
                 </div>
