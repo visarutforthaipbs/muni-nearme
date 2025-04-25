@@ -257,6 +257,48 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ municipality }) => {
           </div>
         </div>
       )}
+
+      {/* Sidebar Footer */}
+      <div className="sidebar-footer">
+        <div className="footer-data-credit">
+          <div className="data-source">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+              <line x1="12" y1="22.08" x2="12" y2="12"></line>
+            </svg>
+            <span>แหล่งข้อมูล:</span>
+          </div>
+          <ol className="data-source-list">
+            <li>
+              <a
+                href="https://www.dla.go.th/work/money/data/03/Summary_66.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                งบประมาณปี 2566 ของเทศบาลทั้งหมด 2472 แห่ง
+              </a>
+            </li>
+            <li>
+              <a
+                href="https://gistdaportal.gistda.or.th/arcgis/rest/services/Hosted/L05_Munisan_DPT_50K/FeatureServer/0"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                ขอบเขตของเทศบาลทั้งหมด 2472 แห่ง
+              </a>
+            </li>
+          </ol>
+        </div>
+      </div>
     </div>
   );
 };
