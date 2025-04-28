@@ -80,7 +80,7 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ municipality }) => {
       return (
         <div className="placeholder-content">
           <img
-            src="/logo-1.gif"
+            src="/muni-logo-2.gif"
             alt="เทศบาลใกล้ฉัน"
             className="logo-image"
             style={{
