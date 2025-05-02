@@ -4,6 +4,7 @@ import React, {
   useCallback,
   useImperativeHandle,
   forwardRef,
+  useRef,
 } from "react";
 import {
   MapContainer,
@@ -114,15 +115,186 @@ const Map = forwardRef<MapRef, MapProps>(({ onMunicipalitySelect }, ref) => {
     useState<GeoJsonFeature | null>(null);
   const [mapLayers, setMapLayers] = useState<{ [key: string]: L.Layer }>({});
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
+  const layersRef = useRef<{ [key: string]: L.Layer }>({});
 
   // Default center coordinates for Thailand
   const defaultCenter: [number, number] = [13.7563, 100.5018]; // Bangkok coordinates
+
+  // Helper function to calculate budget based on municipality properties
+  const calculateBudget = (properties: any): number => {
+    const municipalityName = properties.name || properties.mun_name || "";
+    const rawBudgetValue = properties["1- clean-extracted_46_to_235_total"];
+
+    // Standard budget calculation logic
+    let calculatedBudget = 0;
+
+    // Check if we have a valid budget value
+    if (rawBudgetValue) {
+      // Remove commas and spaces before parsing
+      const cleanBudgetValue = rawBudgetValue.toString().replace(/[\s,]/g, "");
+      const budgetValue = parseFloat(cleanBudgetValue);
+
+      if (!isNaN(budgetValue)) {
+        // Determine the magnitude of the budget and apply appropriate scaling
+        if (budgetValue >= 1000) {
+          // If value is already very large (like 1,755.97), it's likely in millions
+          calculatedBudget = budgetValue * 1000000;
+
+          // Special case for a few municipalities we know have incorrect data
+          if (
+            municipalityName === "เทศบาลนครเชียงใหม่" ||
+            (municipalityName &&
+              municipalityName.includes("เชียงใหม่") &&
+              properties[
+                "check-extracted-data - all-muni-nso-thai_type"
+              ]?.includes("นคร"))
+          ) {
+            console.log("Fixing Chiang Mai City Municipality budget");
+            calculatedBudget = 1755970000; // Explicitly set to 1.75597 billion
+          } else if (
+            municipalityName === "เทศบาลนครแหลมฉบัง" ||
+            (municipalityName &&
+              municipalityName.includes("แหลมฉบัง") &&
+              properties[
+                "check-extracted-data - all-muni-nso-thai_type"
+              ]?.includes("นคร"))
+          ) {
+            console.log("Fixing Laem Chabang City Municipality budget");
+            calculatedBudget = 1423500000; // Explicitly set to 1.4235 billion
+          }
+        } else if (budgetValue >= 100) {
+          // Medium range values might be in hundreds of millions
+          calculatedBudget = budgetValue * 1000000;
+        } else if (budgetValue > 0) {
+          // Small values might be in millions directly
+          calculatedBudget = budgetValue * 1000000;
+        } else {
+          // Zero or negative values - use defaults based on municipality type
+          calculatedBudget = getDefaultBudgetByType(properties);
+        }
+      }
+    } else {
+      // No valid budget - use defaults based on municipality type
+      calculatedBudget = getDefaultBudgetByType(properties);
+    }
+
+    return calculatedBudget;
+  };
+
+  // Helper function to calculate budget sources based on municipality type
+  const calculateBudgetSources = (properties: any, totalBudget: number) => {
+    const type =
+      properties.type ||
+      properties["check-extracted-data - all-muni-nso-thai_type"] ||
+      "";
+
+    // Get actual budget sources data if available
+    let selfCollected = parseFloat(
+      properties["จัดเก็บเอง (ล้านบาท)"]?.replace(/[\s,]/g, "") || "0"
+    );
+    let stateAllocated = parseFloat(
+      properties["รัฐจัดสรร (ล้านบาท)"]?.replace(/[\s,]/g, "") || "0"
+    );
+    let subsidies = parseFloat(
+      properties["เงินอุดหนุน (ล้านบาท)"]?.replace(/[\s,]/g, "") || "0"
+    );
+
+    // If we don't have real data, estimate based on municipality type
+    if (selfCollected === 0 && stateAllocated === 0 && subsidies === 0) {
+      if (type.includes("นคร") || type.toLowerCase().includes("nakhon")) {
+        // City municipality (เทศบาลนคร) typical breakdown
+        selfCollected = (totalBudget * 0.3) / 1000000; // 30% self-collected
+        stateAllocated = (totalBudget * 0.45) / 1000000; // 45% state allocated
+        subsidies = (totalBudget * 0.25) / 1000000; // 25% subsidies
+      } else if (
+        type.includes("เมือง") ||
+        type.toLowerCase().includes("mueang")
+      ) {
+        // Town municipality (เทศบาลเมือง) typical breakdown
+        selfCollected = (totalBudget * 0.25) / 1000000; // 25% self-collected
+        stateAllocated = (totalBudget * 0.45) / 1000000; // 45% state allocated
+        subsidies = (totalBudget * 0.3) / 1000000; // 30% subsidies
+      } else {
+        // Subdistrict municipality (เทศบาลตำบล) typical breakdown
+        selfCollected = (totalBudget * 0.15) / 1000000; // 15% self-collected
+        stateAllocated = (totalBudget * 0.4) / 1000000; // 40% state allocated
+        subsidies = (totalBudget * 0.45) / 1000000; // 45% subsidies
+      }
+    } else {
+      // If we have real data but it's in text format with "ล้านบาท"
+      // Convert to numerical values in millions (ล้านบาท)
+      selfCollected = parseFloat(
+        selfCollected.toString().replace(/[^0-9.]/g, "")
+      );
+      stateAllocated = parseFloat(
+        stateAllocated.toString().replace(/[^0-9.]/g, "")
+      );
+      subsidies = parseFloat(subsidies.toString().replace(/[^0-9.]/g, ""));
+    }
+
+    return {
+      selfCollected,
+      stateAllocated,
+      subsidies,
+    };
+  };
+
+  // Style function for GeoJSON features
+  const style = (feature: any) => {
+    const properties = feature.properties;
+    let fillColor = "#00D2CA"; // default color (subdistrict/ตำบล)
+
+    // Determine color based on municipality type
+    const municipalityType =
+      properties?.type ||
+      properties?.["check-extracted-data - all-muni-nso-thai_type"] ||
+      "";
+
+    if (municipalityType && typeof municipalityType === "string") {
+      const type = municipalityType.toLowerCase();
+      if (
+        type.includes("นคร") ||
+        type.includes("city") ||
+        type.includes("nakhon")
+      ) {
+        fillColor = "#FF5062"; // city
+      } else if (
+        type.includes("เมือง") ||
+        type.includes("town") ||
+        type.includes("mueang")
+      ) {
+        fillColor = "#5C48F6"; // town
+      }
+    }
+
+    return {
+      fillColor: fillColor,
+      weight: 2,
+      opacity: 0.9,
+      color: "#FFFFFF",
+      dashArray: "",
+      fillOpacity: 0.7,
+    };
+  };
+
+  // Store layer references without triggering re-renders
+  const storeLayerRef = useCallback((id: string, layer: L.Layer) => {
+    layersRef.current[id] = layer;
+  }, []);
+
+  // Once GeoJSON data is loaded and rendered, update the mapLayers state
+  useEffect(() => {
+    if (geoJsonData && Object.keys(layersRef.current).length > 0) {
+      setMapLayers(layersRef.current);
+    }
+  }, [geoJsonData]);
 
   // Expose methods to parent component
   useImperativeHandle(ref, () => ({
     focusOnMunicipality: (municipalityId: string) => {
       // Find the layer for the municipality ID
-      const layer = mapLayers[municipalityId];
+      const layer =
+        layersRef.current[municipalityId] || mapLayers[municipalityId];
       if (layer && mapInstance) {
         // Since TypeScript doesn't recognize getBounds on all layer types,
         // we need to use type assertions to access the method
@@ -147,6 +319,100 @@ const Map = forwardRef<MapRef, MapProps>(({ onMunicipalitySelect }, ref) => {
       }
     },
   }));
+
+  // Function to handle interaction with each GeoJSON feature
+  const onEachFeature = useCallback(
+    (feature: any, layer: L.Layer) => {
+      if (feature.properties) {
+        // Store reference to the layer with municipality ID as key
+        const municipalityId =
+          feature.properties.id ||
+          feature.properties.muni_code ||
+          feature.properties.name;
+
+        // Store layer reference in ref instead of setState
+        storeLayerRef(municipalityId, layer);
+
+        // Style change on hover
+        layer.on({
+          mouseover: (e) => {
+            const layer = e.target as L.Path;
+            layer.setStyle({
+              weight: 3,
+              fillOpacity: 0.9,
+            });
+            if (layer.bringToFront) {
+              layer.bringToFront();
+            }
+          },
+          mouseout: (e) => {
+            const layer = e.target as L.Path;
+            layer.setStyle(style(feature));
+          },
+          click: (e) => {
+            // Create municipality data object from feature properties
+            const municipalityData: Municipality = {
+              id: feature.properties.id || feature.properties.muni_code || "1",
+              name:
+                feature.properties.name ||
+                feature.properties.mun_name ||
+                "ไม่ทราบชื่อ",
+              budget: calculateBudget(feature.properties),
+              province:
+                feature.properties.province ||
+                feature.properties.cwt_name ||
+                "ไม่ทราบจังหวัด",
+              district:
+                feature.properties.district ||
+                feature.properties.amp_name ||
+                "ไม่ทราบอำเภอ",
+              type:
+                feature.properties.type ||
+                feature.properties[
+                  "check-extracted-data - all-muni-nso-thai_type"
+                ] ||
+                "เทศบาลตำบล",
+              population: parseInt(
+                feature.properties[
+                  "1- clean-extracted_46_to_235_poppu"
+                ]?.replace(/[\s,]/g, "") || "0"
+              ),
+              area: parseFloat(
+                feature.properties[
+                  "1- clean-extracted_46_to_235_land-sque-km"
+                ] || "0"
+              ),
+              budgetSources: calculateBudgetSources(
+                feature.properties,
+                calculateBudget(feature.properties)
+              ),
+            };
+
+            // Send municipality data to parent component to show in sidebar
+            onMunicipalitySelect(municipalityData);
+
+            // Zoom to municipality bounds
+            if (e.target.getBounds) {
+              const bounds = e.target.getBounds();
+              if (bounds) {
+                const mapInstance = e.target._map;
+                if (mapInstance) {
+                  mapInstance.fitBounds(bounds);
+                }
+              }
+            }
+          },
+        });
+      }
+    },
+    [
+      storeLayerRef,
+      onMunicipalitySelect,
+      style,
+      calculateBudget,
+      calculateBudgetSources,
+    ]
+  );
 
   // Get the map instance when it's ready
   const MapController = () => {
@@ -528,248 +794,6 @@ const Map = forwardRef<MapRef, MapProps>(({ onMunicipalitySelect }, ref) => {
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }, [findNearestMunicipality]);
-
-  // Function to handle interaction with each GeoJSON feature
-  const onEachFeature = (feature: any, layer: L.Layer) => {
-    if (feature.properties) {
-      // Store reference to the layer with municipality ID as key
-      const municipalityId =
-        feature.properties.id ||
-        feature.properties.muni_code ||
-        feature.properties.name;
-      setMapLayers((prevLayers) => ({
-        ...prevLayers,
-        [municipalityId]: layer,
-      }));
-
-      // Style change on hover
-      layer.on({
-        mouseover: (e) => {
-          const layer = e.target as L.Path;
-          layer.setStyle({
-            weight: 3,
-            fillOpacity: 0.9,
-          });
-          if (layer.bringToFront) {
-            layer.bringToFront();
-          }
-        },
-        mouseout: (e) => {
-          const layer = e.target as L.Path;
-          layer.setStyle(style(feature));
-        },
-        click: (e) => {
-          // Create municipality data object from feature properties
-          const municipalityData: Municipality = {
-            id: feature.properties.id || feature.properties.muni_code || "1",
-            name:
-              feature.properties.name ||
-              feature.properties.mun_name ||
-              "ไม่ทราบชื่อ",
-            budget: calculateBudget(feature.properties),
-            province:
-              feature.properties.province ||
-              feature.properties.cwt_name ||
-              "ไม่ทราบจังหวัด",
-            district:
-              feature.properties.district ||
-              feature.properties.amp_name ||
-              "ไม่ทราบอำเภอ",
-            type:
-              feature.properties.type ||
-              feature.properties[
-                "check-extracted-data - all-muni-nso-thai_type"
-              ] ||
-              "เทศบาลตำบล",
-            population: parseInt(
-              feature.properties["1- clean-extracted_46_to_235_poppu"]?.replace(
-                /[\s,]/g,
-                ""
-              ) || "0"
-            ),
-            area: parseFloat(
-              feature.properties["1- clean-extracted_46_to_235_land-sque-km"] ||
-                "0"
-            ),
-            budgetSources: calculateBudgetSources(
-              feature.properties,
-              calculateBudget(feature.properties)
-            ),
-          };
-
-          // Send municipality data to parent component to show in sidebar
-          onMunicipalitySelect(municipalityData);
-
-          // Zoom to municipality bounds
-          if (e.target.getBounds) {
-            const bounds = e.target.getBounds();
-            if (bounds) {
-              const mapInstance = e.target._map;
-              if (mapInstance) {
-                mapInstance.fitBounds(bounds);
-              }
-            }
-          }
-        },
-      });
-    }
-  };
-
-  // Helper function to calculate budget based on municipality properties
-  const calculateBudget = (properties: any): number => {
-    const municipalityName = properties.name || properties.mun_name || "";
-    const rawBudgetValue = properties["1- clean-extracted_46_to_235_total"];
-
-    // Standard budget calculation logic
-    let calculatedBudget = 0;
-
-    // Check if we have a valid budget value
-    if (rawBudgetValue) {
-      // Remove commas and spaces before parsing
-      const cleanBudgetValue = rawBudgetValue.toString().replace(/[\s,]/g, "");
-      const budgetValue = parseFloat(cleanBudgetValue);
-
-      if (!isNaN(budgetValue)) {
-        // Determine the magnitude of the budget and apply appropriate scaling
-        if (budgetValue >= 1000) {
-          // If value is already very large (like 1,755.97), it's likely in millions
-          calculatedBudget = budgetValue * 1000000;
-
-          // Special case for a few municipalities we know have incorrect data
-          if (
-            municipalityName === "เทศบาลนครเชียงใหม่" ||
-            (municipalityName &&
-              municipalityName.includes("เชียงใหม่") &&
-              properties[
-                "check-extracted-data - all-muni-nso-thai_type"
-              ]?.includes("นคร"))
-          ) {
-            console.log("Fixing Chiang Mai City Municipality budget");
-            calculatedBudget = 1755970000; // Explicitly set to 1.75597 billion
-          } else if (
-            municipalityName === "เทศบาลนครแหลมฉบัง" ||
-            (municipalityName &&
-              municipalityName.includes("แหลมฉบัง") &&
-              properties[
-                "check-extracted-data - all-muni-nso-thai_type"
-              ]?.includes("นคร"))
-          ) {
-            console.log("Fixing Laem Chabang City Municipality budget");
-            calculatedBudget = 1423500000; // Explicitly set to 1.4235 billion
-          }
-        } else if (budgetValue >= 100) {
-          // Medium range values might be in hundreds of millions
-          calculatedBudget = budgetValue * 1000000;
-        } else if (budgetValue > 0) {
-          // Small values might be in millions directly
-          calculatedBudget = budgetValue * 1000000;
-        } else {
-          // Zero or negative values - use defaults based on municipality type
-          calculatedBudget = getDefaultBudgetByType(properties);
-        }
-      }
-    } else {
-      // No valid budget - use defaults based on municipality type
-      calculatedBudget = getDefaultBudgetByType(properties);
-    }
-
-    return calculatedBudget;
-  };
-
-  // Helper function to calculate budget sources based on municipality type
-  const calculateBudgetSources = (properties: any, totalBudget: number) => {
-    const type =
-      properties.type ||
-      properties["check-extracted-data - all-muni-nso-thai_type"] ||
-      "";
-
-    // Get actual budget sources data if available
-    let selfCollected = parseFloat(
-      properties["จัดเก็บเอง (ล้านบาท)"]?.replace(/[\s,]/g, "") || "0"
-    );
-    let stateAllocated = parseFloat(
-      properties["รัฐจัดสรร (ล้านบาท)"]?.replace(/[\s,]/g, "") || "0"
-    );
-    let subsidies = parseFloat(
-      properties["เงินอุดหนุน (ล้านบาท)"]?.replace(/[\s,]/g, "") || "0"
-    );
-
-    // If we don't have real data, estimate based on municipality type
-    if (selfCollected === 0 && stateAllocated === 0 && subsidies === 0) {
-      if (type.includes("นคร") || type.toLowerCase().includes("nakhon")) {
-        // City municipality (เทศบาลนคร) typical breakdown
-        selfCollected = (totalBudget * 0.3) / 1000000; // 30% self-collected
-        stateAllocated = (totalBudget * 0.45) / 1000000; // 45% state allocated
-        subsidies = (totalBudget * 0.25) / 1000000; // 25% subsidies
-      } else if (
-        type.includes("เมือง") ||
-        type.toLowerCase().includes("mueang")
-      ) {
-        // Town municipality (เทศบาลเมือง) typical breakdown
-        selfCollected = (totalBudget * 0.25) / 1000000; // 25% self-collected
-        stateAllocated = (totalBudget * 0.45) / 1000000; // 45% state allocated
-        subsidies = (totalBudget * 0.3) / 1000000; // 30% subsidies
-      } else {
-        // Subdistrict municipality (เทศบาลตำบล) typical breakdown
-        selfCollected = (totalBudget * 0.15) / 1000000; // 15% self-collected
-        stateAllocated = (totalBudget * 0.4) / 1000000; // 40% state allocated
-        subsidies = (totalBudget * 0.45) / 1000000; // 45% subsidies
-      }
-    } else {
-      // If we have real data but it's in text format with "ล้านบาท"
-      // Convert to numerical values in millions (ล้านบาท)
-      selfCollected = parseFloat(
-        selfCollected.toString().replace(/[^0-9.]/g, "")
-      );
-      stateAllocated = parseFloat(
-        stateAllocated.toString().replace(/[^0-9.]/g, "")
-      );
-      subsidies = parseFloat(subsidies.toString().replace(/[^0-9.]/g, ""));
-    }
-
-    return {
-      selfCollected,
-      stateAllocated,
-      subsidies,
-    };
-  };
-
-  const style = (feature: any) => {
-    const properties = feature.properties;
-    let fillColor = "#00D2CA"; // default color (subdistrict/ตำบล)
-
-    // Determine color based on municipality type
-    const municipalityType =
-      properties?.type ||
-      properties?.["check-extracted-data - all-muni-nso-thai_type"] ||
-      "";
-
-    if (municipalityType && typeof municipalityType === "string") {
-      const type = municipalityType.toLowerCase();
-      if (
-        type.includes("นคร") ||
-        type.includes("city") ||
-        type.includes("nakhon")
-      ) {
-        fillColor = "#FF5062"; // city
-      } else if (
-        type.includes("เมือง") ||
-        type.includes("town") ||
-        type.includes("mueang")
-      ) {
-        fillColor = "#5C48F6"; // town
-      }
-    }
-
-    return {
-      fillColor: fillColor,
-      weight: 2,
-      opacity: 0.9,
-      color: "#FFFFFF",
-      dashArray: "",
-      fillOpacity: 0.7,
-    };
-  };
 
   return (
     <div className="map-component">
