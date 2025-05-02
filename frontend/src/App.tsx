@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 import "leaflet/dist/leaflet.css";
-import Map from "./components/Map";
+import Map, { MapRef } from "./components/Map";
 import InfoSidebar from "./components/InfoSidebar";
 import { Municipality } from "./types";
 
@@ -11,6 +11,7 @@ const App: React.FC = () => {
   const [activePage, setActivePage] = useState<"map" | "election">("map");
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [currentLogoIndex, setCurrentLogoIndex] = useState<number>(0);
+  const mapRef = useRef<MapRef>(null);
 
   // Array of logo images to rotate
   const logoImages = ["/1.png", "/2.png", "/3.png"];
@@ -18,6 +19,15 @@ const App: React.FC = () => {
   // Function to handle municipality selection
   const handleMunicipalitySelect = (municipality: Municipality | null) => {
     setSelectedMunicipality(municipality);
+  };
+
+  // Function to handle municipality selection from search, which also focuses the map
+  const handleMunicipalitySelectFromSearch = (municipality: Municipality) => {
+    setSelectedMunicipality(municipality);
+    // Focus map on the selected municipality
+    if (mapRef.current) {
+      mapRef.current.focusOnMunicipality(municipality.id);
+    }
   };
 
   // Logo rotation effect
@@ -128,10 +138,10 @@ const App: React.FC = () => {
         <div className="app-container">
           <InfoSidebar
             municipality={selectedMunicipality}
-            onMunicipalitySelect={handleMunicipalitySelect}
+            onMunicipalitySelect={handleMunicipalitySelectFromSearch}
           />
           <div className="main-content">
-            <Map onMunicipalitySelect={handleMunicipalitySelect} />
+            <Map ref={mapRef} onMunicipalitySelect={handleMunicipalitySelect} />
           </div>
         </div>
       ) : (

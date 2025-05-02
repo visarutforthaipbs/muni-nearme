@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import {
   MapContainer,
   TileLayer,
@@ -34,6 +40,11 @@ L.Icon.Default.mergeOptions({
 
 interface MapProps {
   onMunicipalitySelect: (municipality: Municipality | null) => void;
+}
+
+// Export interface for map ref methods
+export interface MapRef {
+  focusOnMunicipality: (municipalityId: string) => void;
 }
 
 // Component to handle map recenter when location changes
@@ -91,7 +102,7 @@ const getDefaultBudgetByType = (properties: any): number => {
   }
 };
 
-const Map: React.FC<MapProps> = ({ onMunicipalitySelect }) => {
+const Map = forwardRef<MapRef, MapProps>(({ onMunicipalitySelect }, ref) => {
   const [geoJsonData, setGeoJsonData] = useState<GeoJsonData | null>(null);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(
     null
@@ -99,12 +110,55 @@ const Map: React.FC<MapProps> = ({ onMunicipalitySelect }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [dataLoading, setDataLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedMunicipality, setSelectedMunicipality] =
     useState<GeoJsonFeature | null>(null);
+  const [mapLayers, setMapLayers] = useState<{ [key: string]: L.Layer }>({});
+  const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
 
   // Default center coordinates for Thailand
   const defaultCenter: [number, number] = [13.7563, 100.5018]; // Bangkok coordinates
+
+  // Expose methods to parent component
+  useImperativeHandle(ref, () => ({
+    focusOnMunicipality: (municipalityId: string) => {
+      // Find the layer for the municipality ID
+      const layer = mapLayers[municipalityId];
+      if (layer && mapInstance) {
+        // Since TypeScript doesn't recognize getBounds on all layer types,
+        // we need to use type assertions to access the method
+        try {
+          // Try to access getBounds and fit bounds
+          if ("getBounds" in layer) {
+            const bounds = (layer as any).getBounds();
+            mapInstance.fitBounds(bounds);
+          }
+
+          // Simulate click on the layer to update styles
+          if ("fire" in layer) {
+            (layer as any).fire("click");
+          }
+        } catch (error) {
+          console.error("Error focusing on municipality:", error);
+        }
+      } else {
+        console.warn(
+          `Municipality with ID ${municipalityId} not found in map layers`
+        );
+      }
+    },
+  }));
+
+  // Get the map instance when it's ready
+  const MapController = () => {
+    const map = useMap();
+
+    // Store map instance
+    useEffect(() => {
+      setMapInstance(map);
+    }, [map]);
+
+    return null;
+  };
 
   // Load GeoJSON data when component mounts
   useEffect(() => {
@@ -478,6 +532,16 @@ const Map: React.FC<MapProps> = ({ onMunicipalitySelect }) => {
   // Function to handle interaction with each GeoJSON feature
   const onEachFeature = (feature: any, layer: L.Layer) => {
     if (feature.properties) {
+      // Store reference to the layer with municipality ID as key
+      const municipalityId =
+        feature.properties.id ||
+        feature.properties.muni_code ||
+        feature.properties.name;
+      setMapLayers((prevLayers) => ({
+        ...prevLayers,
+        [municipalityId]: layer,
+      }));
+
       // Style change on hover
       layer.on({
         mouseover: (e) => {
@@ -846,6 +910,7 @@ const Map: React.FC<MapProps> = ({ onMunicipalitySelect }) => {
           ]}
           maxBoundsViscosity={1.0} // Prevents dragging outside of bounds
         >
+          <MapController />
           <ZoomControl position="bottomright" />
           <TileLayer
             attribution='&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -890,6 +955,6 @@ const Map: React.FC<MapProps> = ({ onMunicipalitySelect }) => {
       </div>
     </div>
   );
-};
+});
 
 export default Map;
