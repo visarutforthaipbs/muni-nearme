@@ -2,12 +2,17 @@ import React, { useState, useEffect } from "react";
 import { Municipality } from "../types";
 import BudgetPieChart from "./BudgetPieChart";
 import BudgetAllocationTool from "./BudgetAllocationTool";
+import MunicipalitySearch from "./MunicipalitySearch";
 
 interface InfoSidebarProps {
   municipality: Municipality | null;
+  onMunicipalitySelect?: (municipality: Municipality) => void;
 }
 
-const InfoSidebar: React.FC<InfoSidebarProps> = ({ municipality }) => {
+const InfoSidebar: React.FC<InfoSidebarProps> = ({
+  municipality,
+  onMunicipalitySelect,
+}) => {
   const [showBudgetBreakdown, setShowBudgetBreakdown] = useState(false);
   const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 768);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
@@ -75,6 +80,12 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ municipality }) => {
     return `${area.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ตร.กม.`;
   };
 
+  const handleSelectMunicipality = (selectedMunicipality: Municipality) => {
+    if (onMunicipalitySelect) {
+      onMunicipalitySelect(selectedMunicipality);
+    }
+  };
+
   const renderMunicipalityInfo = () => {
     if (!municipality) {
       return (
@@ -89,7 +100,16 @@ const InfoSidebar: React.FC<InfoSidebarProps> = ({ municipality }) => {
               display: "block",
             }}
           />
-          <p>เลือกเทศบาลบนแผนที่เพื่อดูข้อมูล</p>
+          <p>เลือกเทศบาลบนแผนที่หรือค้นหาเทศบาลของคุณ</p>
+
+          {onMunicipalitySelect && (
+            <div className="search-section">
+              <MunicipalitySearch
+                onMunicipalitySelect={handleSelectMunicipality}
+              />
+            </div>
+          )}
+
           <div className="placeholder-icon">
             <svg
               xmlns="http://www.w3.org/2000/svg"

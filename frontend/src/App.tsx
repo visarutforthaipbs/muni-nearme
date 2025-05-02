@@ -126,7 +126,10 @@ const App: React.FC = () => {
 
       {activePage === "map" ? (
         <div className="app-container">
-          <InfoSidebar municipality={selectedMunicipality} />
+          <InfoSidebar
+            municipality={selectedMunicipality}
+            onMunicipalitySelect={handleMunicipalitySelect}
+          />
           <div className="main-content">
             <Map onMunicipalitySelect={handleMunicipalitySelect} />
           </div>
