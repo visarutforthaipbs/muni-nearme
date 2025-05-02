@@ -1,24 +1,54 @@
 import axios from "axios";
 import { Municipality, GeoJsonData, GeoJsonFeature } from "../types";
+import * as topojson from "topojson-client";
 
 // Cache to store the fetched data
 let municipalitiesCache: Municipality[] | null = null;
 let geoJsonDataCache: GeoJsonData | null = null;
 
-// Function to load GeoJSON data
+// Function to load GeoJSON data from TopoJSON file
 export const loadGeoJsonData = async (): Promise<GeoJsonData> => {
   if (geoJsonDataCache) {
     return geoJsonDataCache;
   }
 
   try {
-    // Use the corrected file - add a timestamp query parameter to force reload
+    // Use topo-data.json which exists in the data directory
     const response = await axios.get(
-      `${process.env.PUBLIC_URL}/data/geo-data.json?t=${new Date().getTime()}`
+      `${process.env.PUBLIC_URL}/data/topo-data.json`
     );
 
-    geoJsonDataCache = response.data;
-    return response.data;
+    // Check if the data is a valid TopoJSON structure
+    if (response.data.type !== "Topology") {
+      console.error("Data is not a valid TopoJSON structure");
+      throw new Error("Invalid data format: not a TopoJSON");
+    }
+
+    // Find the object in topology
+    const topologyObject = response.data;
+    const objectKeys = Object.keys(topologyObject.objects || {});
+
+    if (!objectKeys.length) {
+      throw new Error("No objects found in TopoJSON");
+    }
+
+    // Use the first object in the topology
+    const objectName = objectKeys[0];
+
+    // Convert TopoJSON to GeoJSON
+    const convertedData = topojson.feature(
+      topologyObject,
+      topologyObject.objects[objectName]
+    );
+
+    // Cast the data to the expected type
+    const typedData: GeoJsonData = {
+      type: "FeatureCollection",
+      features: convertedData.features as unknown as GeoJsonFeature[],
+    };
+
+    geoJsonDataCache = typedData;
+    return typedData;
   } catch (error) {
     console.error("Error loading GeoJSON data:", error);
     throw new Error("Failed to load municipality data");
